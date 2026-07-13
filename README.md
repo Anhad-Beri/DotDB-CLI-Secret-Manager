@@ -142,7 +142,29 @@ python -m vault.cli search DB_
 ```bash
 python -m vault.cli delete KEY
 ```
+### 🚀 Run a command with secrets injected
 
+```bash
+python -m vault.cli run -- COMMAND
+```
+
+Decrypts all secrets and injects them as environment variables
+into the process. Your app accesses them via `os.getenv()` —
+nothing is written to disk.
+
+Example:
+```bash
+python -m vault.cli run -- python app.py
+python -m vault.cli run -- bash deploy.sh
+```
+
+Inside `app.py`:
+```python
+import os
+db_password = os.getenv("DB_PASSWORD")  # works exactly like .env
+```
+
+Secrets exist only in subprocess memory and vanish when it exits.
 ## Project Structure
 
 ```
@@ -154,4 +176,59 @@ vault/
 └── cli.py        # CLI — 6 commands
 ```
 
+___
 
+## The Master Password
+
+The master password is the only thing that can decrypt your secrets.
+It is never stored anywhere — not in `.vault.db`, not in a config
+file, not in memory after the program exits.
+
+**There is no forgot password feature. If you lose it, your 
+encrypted secrets are permanently unreadable.**
+
+When you store or retrieve a secret, your password is passed through
+PBKDF2 (Password-Based Key Derivation Function 2) with 600,000
+iterations of SHA-256. This produces a 256-bit AES key from your
+human-readable password. 600,000 iterations means an attacker 
+brute-forcing your password faces ~0.5 seconds per guess — making
+a billion guesses take approximately 15 years.
+
+-----
+
+## Security Model
+
+### What This Tool Protects Against
+
+- Secrets committed to GitHub — `.vault.db` is encrypted and 
+  unreadable without the master password
+- Other users on the same machine — vault file permissions set 
+  to owner read/write only on Unix
+- Brute-force attacks — vault locks for 60 seconds after 5 wrong 
+  password attempts
+- Tampered vault files — AES-GCM authentication tag detects any 
+  modification and fails immediately
+
+### What This Tool Does Not Protect Against
+
+- An attacker who already knows your master password
+- OS-level keyloggers capturing your password as you type
+- Secrets already loaded into process memory
+
+### Why This Is Safer Than .env
+
+| | `.env` file | CLI Secret Manager |
+|---|---|---|
+| Accidentally pushed to GitHub | Immediate breach | Secrets stay encrypted |
+| Read by another user on same machine | Plaintext visible | Encrypted, unreadable |
+| Brute-force protection | None | 60s lockout after 5 attempts |
+| Master credential required | No | Yes |
+
+## Limitations
+
+- Single user only — no team vault support
+- No key rotation — compromised master password requires 
+  re-encrypting all secrets manually  
+- Key names stored in plaintext — an attacker can see you have 
+  a `DB_PASSWORD`, not what it is
+- File permission enforcement is Unix only
