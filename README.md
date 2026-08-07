@@ -1,4 +1,4 @@
-# 🌐 DotDB - CLI Secret Key Manager
+# 🔑 DotDB - CLI Secret Key Manager
 
 
 
@@ -232,3 +232,11 @@ a billion guesses take approximately 15 years.
 - Key names stored in plaintext — an attacker can see you have 
   a `DB_PASSWORD`, not what it is
 - File permission enforcement is Unix only
+
+## Testing
+
+```bash
+pytest
+```
+
+49 tests passing across 5 modules — crypto, trie, storage, lockout, and CLI run behavior. 2 skipped on Windows (Unix-only file permission checks).
