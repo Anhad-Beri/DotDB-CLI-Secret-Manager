@@ -79,7 +79,7 @@ pip install -e .
 > your `.gitignore`. If accidentally committed, your secrets remain
 > encrypted and unreadable without the master password which is never saved.
 > Committing will not lead to your secret keys getting public, but it is
-> reccommended as an extra measure. 
+> recommended as an extra measure. 
 ---
  
 ## Commands
@@ -173,7 +173,7 @@ vault/
 ├── trie.py       # Prefix tree implemented from scratch
 ├── storage.py    # JSON HashMap persistence + file permission checks
 ├── lockout.py    # Brute-force protection
-└── cli.py        # CLI — 6 commands
+└── cli.py        # CLI — 7 commands
 ```
 
 ___
